@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh api *)",
+      "Bash(curl -sL https://raw.githubusercontent.com/blenkcode/codrops-demo/main/index.html)",
+      "Bash(curl -sL https://raw.githubusercontent.com/blenkcode/codrops-demo/main/src/pages/home/home.html)",
+      "Bash(curl -sL https://raw.githubusercontent.com/blenkcode/codrops-demo/main/src/pages/home/home.js)",
+      "Bash(curl -sL https://raw.githubusercontent.com/blenkcode/codrops-demo/main/src/animations/Enter.js)",
+      "Bash(curl -sL https://raw.githubusercontent.com/blenkcode/codrops-demo/main/src/helpers/wrap.js)",
+      "Bash(curl -sL https://raw.githubusercontent.com/blenkcode/codrops-demo/main/src/lib/index.js)",
+      "Bash(curl -sL https://raw.githubusercontent.com/blenkcode/codrops-demo/main/src/style.css)",
+      "Bash(curl -sL https://raw.githubusercontent.com/blenkcode/codrops-demo/main/src/styles/index.css)",
+      "Bash(curl -sL https://raw.githubusercontent.com/blenkcode/codrops-demo/main/src/styles/variables.css)",
+      "Bash(curl -sL https://raw.githubusercontent.com/blenkcode/codrops-demo/main/src/styles/reset.css)",
+      "Bash(curl -sL https://raw.githubusercontent.com/blenkcode/codrops-demo/main/src/styles/pages/app.css)",
+      "Bash(curl -sL https://raw.githubusercontent.com/blenkcode/codrops-demo/main/package.json)"
+    ]
+  }
+}

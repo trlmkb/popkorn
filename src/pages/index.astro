@@ -1,0 +1,55 @@
+---
+import '../styles/global.css';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>POPKØRN</title>
+  </head>
+  <body>
+    <main>
+      <section class="hero">
+        <div class="hero_content">
+          <h1 class="home_title">POPKØRN</h1>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      import { gsap } from 'gsap';
+      import { SplitText } from 'gsap/SplitText';
+
+      gsap.registerPlugin(SplitText);
+
+      const title = document.querySelector<HTMLHeadingElement>('h1.home_title');
+      const content = document.querySelector<HTMLDivElement>('.hero_content');
+
+      if (title && content) {
+        gsap.set(title, { opacity: 1 });
+
+        const split = new SplitText(title, { type: 'chars', aria: 'hidden' });
+
+        gsap.set(split.chars, {
+          y: '100%',
+          rotateX: 60,
+          force3D: true,
+        });
+
+        gsap.set(content, { opacity: 1 });
+
+        gsap.to(split.chars, {
+          y: 0,
+          rotateX: 0,
+          force3D: true,
+          duration: 2.1,
+          stagger: 0.035,
+          ease: 'expo.out',
+          delay: 0.32,
+        });
+      }
+    </script>
+  </body>
+</html>
