@@ -36,8 +36,6 @@ h1 {
   margin: 0;
   display: flex;
   overflow: hidden;
-  padding-left: 1vw;
-  padding-right: 1vw;
   line-height: 82%;
   backface-visibility: hidden;
   perspective: 1000px;
@@ -50,6 +48,7 @@ h1 {
   width: 100%;
   justify-content: flex-end;
   height: 100vh;
+  overflow: hidden;
 }
 
 .hero_content {
@@ -66,6 +65,31 @@ h1 {
 
 .home_title {
   font-size: 22vw;
+}
+
+@media (max-width: 900px) {
+  .hero {
+    display: block;
+    position: relative;
+  }
+
+  .hero_content {
+    width: auto;
+    height: auto;
+    margin-bottom: 0;
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-origin: 0 0;
+    transform: rotate(90deg) translateY(-100%);
+    white-space: nowrap;
+  }
+
+  .home_title {
+    font-size: 18vh;
+    padding: 0 1vh;
+  }
 }
 
 .char-wrapper {
