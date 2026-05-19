@@ -10,46 +10,278 @@ import '../styles/global.css';
     <title>POPKØRN</title>
   </head>
   <body>
-    <main>
-      <section class="hero">
-        <div class="hero_content">
-          <h1 class="home_title">POPKØRN</h1>
-        </div>
-      </section>
-    </main>
-
     <script>
-      import { gsap } from 'gsap';
-      import { SplitText } from 'gsap/SplitText';
+      import * as THREE from 'three';
 
-      gsap.registerPlugin(SplitText);
+      const TEXT = 'POPKØRN';
+      const TEXTURE_SIZE = 2048;
+      const FONT_STACK =
+        '"Helvetica Neue", Helvetica, Arial, system-ui, sans-serif';
+      const FONT_WEIGHT = '900';
+      const SHADOW_BLUR_PX = 36;
+      const SHADOW_OFFSET_Y = 24;
 
-      const title = document.querySelector<HTMLHeadingElement>('h1.home_title');
-      const content = document.querySelector<HTMLDivElement>('.hero_content');
+      // Half-extents of the text bounding box in world units, after the
+      // plane's 45° rotation, used to fit the orthographic frustum.
+      const TEXT_HALF_X = 6.1;
+      const TEXT_HALF_Y = 5.45;
+      const FIT_PADDING = 1.06;
 
-      if (title && content) {
-        gsap.set(title, { opacity: 1 });
+      type CanvasDrawOpts = {
+        fill: string;
+        blur?: number;
+        offsetY?: number;
+      };
 
-        const split = new SplitText(title, { type: 'chars', aria: 'hidden' });
+      const drawTextCanvas = (
+        canvas: HTMLCanvasElement,
+        textValue: string,
+        opts: CanvasDrawOpts,
+      ): void => {
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
 
-        gsap.set(split.chars, {
-          y: '100%',
-          rotateX: 60,
-          force3D: true,
+        ctx.save();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // measure once at a probe size, then scale to fill ~92% of the texture
+        ctx.filter = 'none';
+        const probeSize = 500;
+        ctx.font = `${FONT_WEIGHT} ${probeSize}px ${FONT_STACK}`;
+        const probeMetrics = ctx.measureText(textValue);
+        const targetWidth = TEXTURE_SIZE * 0.92;
+        const scale = targetWidth / probeMetrics.width;
+        const fontSize = probeSize * scale;
+
+        if (opts.blur && opts.blur > 0) {
+          ctx.filter = `blur(${opts.blur}px)`;
+        }
+        ctx.fillStyle = opts.fill;
+        ctx.font = `${FONT_WEIGHT} ${fontSize}px ${FONT_STACK}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(
+          textValue,
+          TEXTURE_SIZE / 2,
+          TEXTURE_SIZE / 2 + (opts.offsetY ?? 0),
+        );
+        ctx.restore();
+      };
+
+      const colorsFor = (
+        dark: boolean,
+      ): { text: string; shadow: string } => ({
+        text: dark ? '#fafafa' : '#111111',
+        shadow: dark ? 'rgba(250, 250, 250, 0.22)' : 'rgba(17, 17, 17, 0.45)',
+      });
+
+      // ---------- offscreen canvases for text + shadow ----------
+      const textCanvas = document.createElement('canvas');
+      textCanvas.width = TEXTURE_SIZE;
+      textCanvas.height = TEXTURE_SIZE;
+
+      const shadowCanvas = document.createElement('canvas');
+      shadowCanvas.width = TEXTURE_SIZE;
+      shadowCanvas.height = TEXTURE_SIZE;
+
+      const darkMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+      const redrawTextures = (): void => {
+        const { text, shadow } = colorsFor(darkMediaQuery.matches);
+        drawTextCanvas(textCanvas, TEXT, { fill: text });
+        drawTextCanvas(shadowCanvas, TEXT, {
+          fill: shadow,
+          blur: SHADOW_BLUR_PX,
+          offsetY: SHADOW_OFFSET_Y,
         });
+        textTexture.needsUpdate = true;
+        shadowTexture.needsUpdate = true;
+      };
 
-        gsap.set(content, { opacity: 1 });
+      const textTexture = new THREE.CanvasTexture(textCanvas);
+      textTexture.minFilter = THREE.LinearFilter;
+      textTexture.magFilter = THREE.LinearFilter;
+      textTexture.anisotropy = 4;
 
-        gsap.to(split.chars, {
-          y: 0,
-          rotateX: 0,
-          force3D: true,
-          duration: 2.1,
-          stagger: 0.035,
-          ease: 'expo.out',
-          delay: 0.32,
-        });
-      }
+      const shadowTexture = new THREE.CanvasTexture(shadowCanvas);
+      shadowTexture.minFilter = THREE.LinearFilter;
+      shadowTexture.magFilter = THREE.LinearFilter;
+
+      redrawTextures();
+      darkMediaQuery.addEventListener('change', redrawTextures);
+
+      // ---------- scene / camera / renderer ----------
+      const scene = new THREE.Scene();
+      scene.background = null;
+
+      let aspect = window.innerWidth / window.innerHeight;
+      const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.01, 1000);
+      camera.position.set(0, -10, 5);
+      camera.lookAt(0, 0, 0);
+
+      const fitCamera = (): void => {
+        aspect = window.innerWidth / window.innerHeight;
+        const distance =
+          Math.max(TEXT_HALF_Y, TEXT_HALF_X / aspect) * FIT_PADDING;
+        camera.left = -distance * aspect;
+        camera.right = distance * aspect;
+        camera.top = distance;
+        camera.bottom = -distance;
+        camera.updateProjectionMatrix();
+      };
+      fitCamera();
+
+      const renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true,
+      });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      // ---------- invisible raycast plane ----------
+      const hit = new THREE.Mesh(
+        new THREE.PlaneGeometry(500, 500, 10, 10),
+        new THREE.MeshBasicMaterial({
+          color: 0xffffff,
+          transparent: true,
+          opacity: 0,
+          depthWrite: false,
+        }),
+      );
+      hit.name = 'hit';
+      scene.add(hit);
+
+      // ---------- main lettered plane ----------
+      const planeGeometry = new THREE.PlaneGeometry(15, 15, 100, 100);
+
+      const textMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+          uTexture: { value: textTexture },
+          uDisplacement: { value: new THREE.Vector3(0, 0, 0) },
+        },
+        vertexShader: /* glsl */ `
+          varying vec2 vUv;
+          uniform vec3 uDisplacement;
+
+          float easeInOutCubic(float x) {
+            return x < 0.5 ? 4. * x * x * x : 1. - pow(-2. * x + 2., 3.) / 2.;
+          }
+
+          float mapRange(float value, float min1, float max1, float min2, float max2) {
+            return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
+          }
+
+          void main() {
+            vUv = uv;
+            vec3 newPosition = position;
+            vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+            float dist = length(uDisplacement - worldPosition.rgb);
+            float minDistance = 3.0;
+            if (dist < minDistance) {
+              float distanceMapped = mapRange(dist, 0.0, minDistance, 1.0, 0.0);
+              float val = easeInOutCubic(distanceMapped);
+              newPosition.z += val;
+            }
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
+          }
+        `,
+        fragmentShader: /* glsl */ `
+          varying vec2 vUv;
+          uniform sampler2D uTexture;
+          void main() {
+            gl_FragColor = texture2D(uTexture, vUv);
+          }
+        `,
+        transparent: true,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+      });
+
+      const plane = new THREE.Mesh(planeGeometry, textMaterial);
+      plane.rotation.z = Math.PI / 4;
+      scene.add(plane);
+
+      // ---------- shadow plane (fades where letters lift) ----------
+      const shadowMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+          uTexture: { value: shadowTexture },
+          uDisplacement: { value: new THREE.Vector3(0, 0, 0) },
+        },
+        vertexShader: /* glsl */ `
+          varying vec2 vUv;
+          varying float vDist;
+          uniform vec3 uDisplacement;
+
+          void main() {
+            vUv = uv;
+            vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+            vDist = length(uDisplacement - worldPosition.rgb);
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: /* glsl */ `
+          varying vec2 vUv;
+          varying float vDist;
+          uniform sampler2D uTexture;
+
+          float mapRange(float value, float min1, float max1, float min2, float max2) {
+            return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
+          }
+
+          void main() {
+            vec4 color = texture2D(uTexture, vUv);
+            float minDistance = 3.0;
+            if (vDist < minDistance) {
+              float alpha = mapRange(vDist, minDistance, 0.0, color.a, 0.0);
+              color.a = alpha;
+            }
+            gl_FragColor = color;
+          }
+        `,
+        transparent: true,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+      });
+
+      const shadowPlane = new THREE.Mesh(planeGeometry, shadowMaterial);
+      shadowPlane.rotation.z = Math.PI / 4;
+      shadowPlane.position.z = -0.01;
+      scene.add(shadowPlane);
+
+      // ---------- pointer raycasting ----------
+      const raycaster = new THREE.Raycaster();
+      const pointer = new THREE.Vector2();
+
+      const handlePointerMove = (event: PointerEvent): void => {
+        pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+        pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        raycaster.setFromCamera(pointer, camera);
+        const intersects = raycaster.intersectObject(hit);
+        if (intersects.length > 0) {
+          const p = intersects[0].point;
+          textMaterial.uniforms.uDisplacement.value.copy(p);
+          shadowMaterial.uniforms.uDisplacement.value.copy(p);
+        }
+      };
+
+      window.addEventListener('pointermove', handlePointerMove);
+
+      // ---------- resize ----------
+      const handleResize = (): void => {
+        fitCamera();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      };
+
+      window.addEventListener('resize', handleResize);
+
+      // ---------- render loop ----------
+      const render = (): void => {
+        requestAnimationFrame(render);
+        renderer.render(scene, camera);
+      };
+      render();
     </script>
   </body>
 </html>

@@ -13,7 +13,12 @@
       "Bash(curl -sL https://raw.githubusercontent.com/blenkcode/codrops-demo/main/src/styles/variables.css)",
       "Bash(curl -sL https://raw.githubusercontent.com/blenkcode/codrops-demo/main/src/styles/reset.css)",
       "Bash(curl -sL https://raw.githubusercontent.com/blenkcode/codrops-demo/main/src/styles/pages/app.css)",
-      "Bash(curl -sL https://raw.githubusercontent.com/blenkcode/codrops-demo/main/package.json)"
+      "Bash(curl -sL https://raw.githubusercontent.com/blenkcode/codrops-demo/main/package.json)",
+      "WebFetch(domain:tympanus.net)",
+      "WebFetch(domain:codepen.io)",
+      "Bash(curl -sL -A \"Mozilla/5.0 \\(Macintosh; Intel Mac OS X 10_15_7\\) AppleWebKit/537.36 \\(KHTML, like Gecko\\) Chrome/120.0.0.0 Safari/537.36\" \"https://codepen.io/Paola-Demichelis-the-lessful/pen/ByaNGod\" -o /tmp/pen.html)",
+      "Read(//tmp/**)",
+      "Bash(cat /tmp/letters.html)"
     ]
   }
 }
