@@ -10,6 +10,9 @@ import '../styles/global.css';
     <title>POPKØRN</title>
   </head>
   <body>
+    <div class="handle" aria-label="Drag to move the displacement point" role="slider">
+      <div class="handle__inner"></div>
+    </div>
     <script>
       import * as THREE from 'three';
 
@@ -253,10 +256,12 @@ import '../styles/global.css';
       const raycaster = new THREE.Raycaster();
       const pointer = new THREE.Vector2();
 
-      const handlePointerMove = (event: PointerEvent): void => {
-        pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
-        pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
+      const updateDisplacementFromScreen = (
+        clientX: number,
+        clientY: number,
+      ): void => {
+        pointer.x = (clientX / window.innerWidth) * 2 - 1;
+        pointer.y = -(clientY / window.innerHeight) * 2 + 1;
         raycaster.setFromCamera(pointer, camera);
         const intersects = raycaster.intersectObject(hit);
         if (intersects.length > 0) {
@@ -266,12 +271,88 @@ import '../styles/global.css';
         }
       };
 
-      window.addEventListener('pointermove', handlePointerMove);
+      // ---------- touch handle (draggable puck) ----------
+      const handle = document.querySelector<HTMLDivElement>('.handle');
+
+      let draggingHandle = false;
+
+      const positionHandle = (x: number, y: number): void => {
+        if (!handle) return;
+        const w = handle.offsetWidth || 88;
+        const h = handle.offsetHeight || 64;
+        const clampedX = Math.max(0, Math.min(window.innerWidth - w, x));
+        const clampedY = Math.max(0, Math.min(window.innerHeight - h, y));
+        handle.style.left = `${clampedX}px`;
+        handle.style.top = `${clampedY}px`;
+      };
+
+      const syncDisplacementToHandle = (): void => {
+        if (!handle) return;
+        const rect = handle.getBoundingClientRect();
+        updateDisplacementFromScreen(
+          rect.left + rect.width / 2,
+          rect.top + rect.height / 2,
+        );
+      };
+
+      if (handle) {
+        let offsetX = 0;
+        let offsetY = 0;
+
+        const placeInitial = (): void => {
+          const size = handle.offsetWidth || 88;
+          const margin = 24;
+          positionHandle(
+            window.innerWidth - size - margin,
+            window.innerHeight - size - margin,
+          );
+          syncDisplacementToHandle();
+        };
+        requestAnimationFrame(placeInitial);
+
+        handle.addEventListener('pointerdown', (e: PointerEvent) => {
+          draggingHandle = true;
+          handle.classList.add('dragging');
+          const rect = handle.getBoundingClientRect();
+          offsetX = e.clientX - rect.left;
+          offsetY = e.clientY - rect.top;
+          handle.setPointerCapture(e.pointerId);
+          e.preventDefault();
+        });
+
+        handle.addEventListener('pointermove', (e: PointerEvent) => {
+          if (!draggingHandle) return;
+          positionHandle(e.clientX - offsetX, e.clientY - offsetY);
+          syncDisplacementToHandle();
+        });
+
+        const endDrag = (e: PointerEvent): void => {
+          if (!draggingHandle) return;
+          draggingHandle = false;
+          handle.classList.remove('dragging');
+          if (handle.hasPointerCapture(e.pointerId)) {
+            handle.releasePointerCapture(e.pointerId);
+          }
+        };
+        handle.addEventListener('pointerup', endDrag);
+        handle.addEventListener('pointercancel', endDrag);
+      }
+
+      // ---------- global pointer for desktop (and direct canvas touch) ----------
+      window.addEventListener('pointermove', (event: PointerEvent) => {
+        if (draggingHandle) return;
+        updateDisplacementFromScreen(event.clientX, event.clientY);
+      });
 
       // ---------- resize ----------
       const handleResize = (): void => {
         fitCamera();
         renderer.setSize(window.innerWidth, window.innerHeight);
+        if (handle) {
+          const rect = handle.getBoundingClientRect();
+          positionHandle(rect.left, rect.top);
+          syncDisplacementToHandle();
+        }
       };
 
       window.addEventListener('resize', handleResize);

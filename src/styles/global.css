@@ -37,6 +37,57 @@ canvas {
   height: 100%;
 }
 
+.handle {
+  display: none;
+  position: fixed;
+  width: 88px;
+  height: 88px;
+  z-index: 10;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  cursor: grab;
+}
+
+.handle__inner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(20, 20, 20, 0.12);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transform: translate(-50%, -50%) rotateX(63deg) rotateZ(45deg);
+  transform-style: preserve-3d;
+  box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.18);
+  transition: transform 0.15s ease;
+}
+
+.handle.dragging {
+  cursor: grabbing;
+}
+
+.handle.dragging .handle__inner {
+  transform: translate(-50%, -50%) rotateX(63deg) rotateZ(45deg) scale(1.08);
+  transition: transform 0.1s ease;
+}
+
+@media (prefers-color-scheme: dark) {
+  .handle__inner {
+    background: rgba(0, 0, 0, 0.45);
+    box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.4);
+  }
+}
+
+@media (max-width: 900px), (hover: none) and (pointer: coarse) {
+  .handle {
+    display: block;
+  }
+}
+
 ::selection {
   background-color: #676767;
   color: #ffffff;
