@@ -1,0 +1,120 @@
+---
+import '@fontsource-variable/inter';
+import '@fontsource-variable/fraunces';
+import '../styles/book.css';
+import '../styles/lightbox.css';
+import { getStore } from '../lib/store';
+
+const store = getStore();
+const [allPhotos, allAlbums] = await Promise.all([store.listPhotos(), store.listAlbums()]);
+const photos = allPhotos.filter((p) => p.published);
+
+const tagCounts = new Map<string, number>();
+for (const p of photos) for (const t of p.tags) tagCounts.set(t, (tagCounts.get(t) ?? 0) + 1);
+const tags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+const albums = allAlbums.filter((a) => photos.some((p) => p.albumId === a.id));
+
+const payload = {
+  photos: photos.map((p) => ({
+    id: p.id,
+    full: p.full,
+    thumb: p.thumb,
+    width: p.width,
+    height: p.height,
+    caption: p.caption,
+    tags: p.tags,
+    albumId: p.albumId,
+    color: p.color,
+  })),
+  albums: albums.map((a) => ({ id: a.id, title: a.title })),
+};
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0a0a09" />
+    <meta name="description" content="POPKØRN — a photobook" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <title>POPKØRN — photobook</title>
+  </head>
+  <body class="bk">
+    <header class="bk-head">
+      <a class="bk-mark" href="/">POPKØRN</a>
+      <span class="bk-count">{photos.length} photograph{photos.length === 1 ? '' : 's'}</span>
+    </header>
+
+    {
+      (albums.length > 0 || tags.length > 0) && (
+        <nav class="bk-filters" aria-label="Filters">
+          {albums.length > 0 && (
+            <div class="bk-row bk-albums">
+              <button class="chip chip-album is-active" data-album="">
+                everything
+              </button>
+              {albums.map((a) => (
+                <button class="chip chip-album" data-album={a.id}>
+                  {a.title}
+                </button>
+              ))}
+            </div>
+          )}
+          {tags.length > 0 && (
+            <div class="bk-row bk-tags">
+              {tags.map(([t, c]) => (
+                <button class="chip chip-tag" data-tag={t}>
+                  {t}
+                  <span class="chip-n">{c}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </nav>
+      )
+    }
+
+    <main class="bk-grid" id="grid">
+      {
+        photos.map((p) => (
+          <button
+            class="ph"
+            data-id={p.id}
+            data-album={p.albumId ?? ''}
+            data-tags={p.tags.join('|')}
+            style={`--ar:${(p.width / Math.max(1, p.height)).toFixed(4)};background-color:${p.color}`}
+            aria-label={p.caption || 'Open photo'}
+          >
+            <img
+              src={p.thumb}
+              alt={p.caption}
+              loading="lazy"
+              decoding="async"
+              width={p.width}
+              height={p.height}
+            />
+          </button>
+        ))
+      }
+    </main>
+
+    <div class="bk-empty" id="empty" hidden={photos.length > 0}>
+      <p class="bk-empty-title">The book is empty.</p>
+      <p class="bk-empty-sub">
+        {photos.length === 0 ? (
+          <a href="/admin">Open the studio</a>
+        ) : (
+          <button id="clear-filters">Clear filters</button>
+        )}
+      </p>
+    </div>
+
+    <script type="application/json" id="pk-data" set:html={JSON.stringify(payload)} />
+    <script>
+      import '../scripts/book';
+    </script>
+  </body>
+</html>

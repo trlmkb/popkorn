@@ -1,0 +1,66 @@
+---
+import '@fontsource-variable/inter';
+import '@fontsource-variable/fraunces';
+import '../../styles/admin.css';
+import { usingDefaultPassword } from '../../lib/auth';
+
+const showHint = usingDefaultPassword();
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#101010" />
+    <meta name="robots" content="noindex" />
+    <title>POPKØRN — studio</title>
+    <link rel="icon" href="/icons/icon-192.png" />
+  </head>
+  <body class="ad ad-login">
+    <main class="login">
+      <div class="login-card">
+        <div class="login-mark">POPKØRN</div>
+        <div class="login-sub">studio</div>
+        <form id="login-form">
+          <input
+            id="password"
+            type="password"
+            placeholder="Password"
+            autocomplete="current-password"
+            autofocus
+          />
+          <button class="btn btn-acc" type="submit">Enter</button>
+        </form>
+        <p class="login-error" id="login-error" hidden>Wrong password.</p>
+        {
+          showHint && (
+            <p class="login-hint">
+              No <code>ADMIN_PASSWORD</code> set — the default is <code>popkorn</code>.
+            </p>
+          )
+        }
+      </div>
+    </main>
+    <script>
+      const form = document.getElementById('login-form') as HTMLFormElement;
+      const password = document.getElementById('password') as HTMLInputElement;
+      const error = document.getElementById('login-error') as HTMLElement;
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        error.hidden = true;
+        const res = await fetch('/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: password.value }),
+        });
+        if (res.ok) {
+          location.href = '/admin';
+        } else {
+          error.hidden = false;
+          password.select();
+        }
+      });
+    </script>
+  </body>
+</html>
