@@ -44,11 +44,11 @@ fly secrets set ADMIN_PASSWORD=…
 fly deploy
 ```
 
-**Option B — serverless (Vercel / Netlify) + Supabase.**
+**Option B — Vercel + Supabase (no server to run).**
 Create a free Supabase project, paste `supabase/schema.sql` into its SQL
-editor, then set `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` and `ADMIN_PASSWORD`
-on the host and swap the adapter in `astro.config.mjs`
-(`@astrojs/vercel` / `@astrojs/netlify` instead of `@astrojs/node`).
+editor, then import this repo on Vercel and set `SUPABASE_URL`,
+`SUPABASE_SERVICE_KEY` and `ADMIN_PASSWORD` as environment variables.
+The Vercel adapter is picked automatically at build time — no code changes.
 
 ## The studio
 
