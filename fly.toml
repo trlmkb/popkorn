@@ -1,0 +1,29 @@
+# fly launch --copy-config --name popkorn
+# fly volumes create popkorn_data --size 3
+# fly secrets set ADMIN_PASSWORD=change-me
+# fly deploy
+app = "popkorn"
+primary_region = "arn"
+
+[build]
+
+[env]
+  DATA_DIR = "/data"
+  PORT = "8080"
+  HOST = "0.0.0.0"
+
+[[mounts]]
+  source = "popkorn_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1

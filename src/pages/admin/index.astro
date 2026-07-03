@@ -1,0 +1,78 @@
+---
+import '@fontsource-variable/inter';
+import '@fontsource-variable/fraunces';
+import '../../styles/admin.css';
+import '../../styles/lightbox.css';
+import { getStore } from '../../lib/store';
+
+const store = getStore();
+const [photos, albums] = await Promise.all([store.listPhotos(), store.listAlbums()]);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#101010" />
+    <meta name="robots" content="noindex" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <title>POPKØRN — studio</title>
+  </head>
+  <body class="ad">
+    <header class="ad-top">
+      <a class="ad-mark" href="/book" title="Open the book">POPKØRN <span>studio</span></a>
+      <label class="ad-search">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>
+        <input id="search" type="search" placeholder="Search captions and tags" autocomplete="off" />
+      </label>
+      <div class="ad-tools">
+        <select id="sort" class="ad-select" title="Sort order">
+          <option value="new">Newest first</option>
+          <option value="old">Oldest first</option>
+        </select>
+        <input
+          id="thumb-size"
+          class="ad-zoomrange"
+          type="range"
+          min="96"
+          max="300"
+          step="4"
+          value="170"
+          title="Thumbnail size"
+        />
+        <button id="upload-btn" class="btn btn-acc">Upload</button>
+        <button id="logout-btn" class="btn btn-ghost" title="Sign out" aria-label="Sign out">
+          <svg viewBox="0 0 24 24"><path d="M9 4H5v16h4M14 8l4 4-4 4M18 12H8"></path></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="ad-main">
+      <aside class="ad-side" id="side"></aside>
+      <main class="ad-lib">
+        <div class="ad-libhead" id="libhead"></div>
+        <div class="ad-grid" id="grid"></div>
+        <div class="ad-gridempty" id="grid-empty" hidden></div>
+      </main>
+      <aside class="ad-insp" id="insp" aria-label="Inspector"></aside>
+    </div>
+
+    <input id="file-input" type="file" accept="image/*" multiple hidden />
+    <div class="ad-drop" id="drop" hidden>
+      <div class="ad-drop-inner">
+        <svg viewBox="0 0 24 24"><path d="M12 16V4m0 0l-4 4m4-4l4 4M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"></path></svg>
+        Drop to upload
+      </div>
+    </div>
+    <section class="ad-queue" id="queue" hidden aria-label="Upload queue"></section>
+    <div class="ad-toasts" id="toasts"></div>
+
+    <script type="application/json" id="pk-data" set:html={JSON.stringify({ photos, albums })} />
+    <script>
+      import '../../scripts/admin';
+    </script>
+  </body>
+</html>

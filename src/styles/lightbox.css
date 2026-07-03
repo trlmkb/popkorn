@@ -1,0 +1,160 @@
+html.lb-open {
+  overflow: hidden;
+}
+
+.lb {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+}
+
+.lb-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 5, 4, 0.97);
+}
+
+.lb-stage {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+  overflow: hidden;
+}
+
+.lb-zoomer {
+  position: absolute;
+  will-change: transform;
+}
+
+.lb-zoomed .lb-stage {
+  cursor: grab;
+}
+
+.lb-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+.lb-close,
+.lb-nav {
+  position: fixed;
+  z-index: 5;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(18, 18, 16, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #ddd;
+  cursor: pointer;
+  transition:
+    opacity 0.25s ease,
+    background-color 0.2s ease;
+}
+
+.lb-close:hover,
+.lb-nav:hover {
+  background: rgba(40, 40, 36, 0.7);
+}
+
+.lb-close svg,
+.lb-nav svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.lb-close {
+  top: calc(14px + env(safe-area-inset-top));
+  right: calc(14px + env(safe-area-inset-right));
+}
+
+.lb-prev {
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.lb-next {
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+@media (hover: none) {
+  .lb-nav {
+    display: none;
+  }
+}
+
+.lb-meta {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 4;
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 40px 22px calc(16px + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, rgba(5, 5, 4, 0.6), transparent);
+  pointer-events: none;
+}
+
+.lb-caption {
+  font-family: var(--serif, Georgia, serif);
+  font-style: italic;
+  font-size: 15px;
+  color: #e9e7e2;
+  max-width: 60ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lb-caption:empty {
+  display: none;
+}
+
+.lb-tags {
+  font-family: var(--sans, system-ui, sans-serif);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(233, 231, 226, 0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lb-count {
+  margin-left: auto;
+  font-family: var(--sans, system-ui, sans-serif);
+  font-size: 12px;
+  color: rgba(233, 231, 226, 0.55);
+  font-variant-numeric: tabular-nums;
+  flex: 0 0 auto;
+}
+
+.lb-zoomed .lb-meta,
+.lb-zoomed .lb-close,
+.lb-zoomed .lb-nav,
+.lb-dragging .lb-close,
+.lb-dragging .lb-nav {
+  /* !important: GSAP leaves inline opacity on these after the open animation */
+  opacity: 0 !important;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
